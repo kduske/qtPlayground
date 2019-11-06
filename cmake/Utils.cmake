@@ -1,0 +1,72 @@
+MACRO(SET_XCODE_ATTRIBUTES TARGET)
+    # Set Debug information format
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Debug] "dwarf")
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym")
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=RelWithDebInfo] "dwarf-with-dsym")
+    # Set some warnings
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_PEDANTIC YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_64_TO_32_BIT_CONVERSION YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_ABOUT_RETURN_TYPE YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_SIGN_COMPARE YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_UNINITIALIZED_AUTOS YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_UNUSED_FUNCTION YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_UNUSED_VARIABLE YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_NON_VIRTUAL_DESTRUCTOR YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_UNDECLARED_SELECTOR YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_CHECK_SWITCH_STATEMENTS YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_SHADOW YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_MISSING_PARENTHESES YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_ABOUT_MISSING_NEWLINE YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_ABOUT_POINTER_SIGNEDNESS YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_UNKNOWN_PRAGMAS YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_UNUSED_LABEL YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_UNUSED_VALUE YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS YES)
+
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_EMPTY_BODY YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_INT_CONVERSION YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_IMPLICIT_SIGN_CONVERSION YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_ENUM_CONVERSION YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_ASSIGN_ENUM YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_UNREACHABLE_CODE YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_CXX0X_EXTENSIONS YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_DIRECT_OBJC_ISA_USAGE YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CLANG_WARN_SUSPICIOUS_MOVE YES)
+
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] YES)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Release] NO)
+    set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=RelWithDebInfo] NO)
+ENDMACRO(SET_XCODE_ATTRIBUTES)
+
+MACRO(set_compiler_config TARGET)
+    if(COMPILER_IS_CLANG)
+        target_compile_options(${TARGET} PRIVATE -Wall -Wextra -Weverything -pedantic -Wno-format -Wno-variadic-macros -Wno-c99-extensions -Wno-padded -Wno-unused-parameter -Wno-global-constructors -Wno-exit-time-destructors -Wno-weak-vtables -Wno-weak-template-vtables -Wno-float-equal -Wno-used-but-marked-unused -Wno-format-nonliteral -Wno-missing-noreturn -Wno-unused-local-typedef -Wno-double-promotion -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-implicit-fallthrough -Wno-zero-as-null-pointer-constant -Wno-switch-enum -Wno-c++98-compat-bind-to-temporary-copy)
+        target_compile_options(${TARGET} PRIVATE "$<$<CONFIG:RELEASE>:-O3>")
+
+        # FIXME: Remove once we switch to Xcode 10
+        target_compile_options(${TARGET} PRIVATE -Wno-missing-braces)
+
+        # FIXME: Suppress warnings in moc generated files:
+        target_compile_options(${TARGET} PRIVATE -Wno-redundant-parens)
+    elseif(COMPILER_IS_GNU)
+        target_compile_options(${TARGET} PRIVATE -Wall -Wextra -pedantic -Wno-format -Wno-variadic-macros -Wno-padded -Wno-unused-parameter -Wno-float-equal -Wno-format-nonliteral -Wno-missing-noreturn -Wno-zero-as-null-pointer-constant -Wno-error=maybe-uninitialized)
+        target_compile_options(${TARGET} PRIVATE "$<$<CONFIG:RELEASE>:-O3>")
+
+        # FIXME: enable -Wcpp once we found a workaround for glew / QOpenGLWindow problem, see RenderView.h
+        target_compile_options(${TARGET} PRIVATE -Wno-cpp)
+    elseif(COMPILER_IS_MSVC)
+        target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE)
+        target_compile_options(${TARGET} PRIVATE /W3 /EHsc /MP)
+        target_compile_options(${TARGET} PRIVATE "$<$<CONFIG:RELEASE>:/Ox>")
+
+        # Generate debug symbols even for Release; we build a stripped pdb in Release mode, see TrenchBroomApp.cmake
+        target_compile_options(${TARGET} PRIVATE "$<$<CONFIG:RELEASE>:/Zi>")
+    else()
+        message(FATAL_ERROR "Cannot set compile options for target ${TARGET}")
+    endif()
+ENDMACRO(set_compiler_config)
