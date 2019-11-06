@@ -15,10 +15,91 @@
  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include <QGuiApplication>
-#include <QtGlobal>
+#include <QAbstractListModel>
+#include <QApplication>
+#include <QBoxLayout>
+#include <QSortFilterProxyModel>
+#include <QTableView>
 
-extern void qt_set_sequence_auto_mnemonic(bool b);
+#include <algorithm>
+#include <string>
+#include <tuple>
+#include <vector>
+
+class TableModel : public QAbstractListModel {
+private:
+    using Row = std::tuple<std::string, std::string>;
+    std::vector<Row> m_rows;
+public:
+    explicit TableModel(QObject* parent = nullptr) :
+    QAbstractListModel(parent),
+    m_rows({
+        { "falloff", "2.0" },
+        { "classname", "light" },
+        { "light", "300" },
+        { "attenuation", "1.0" }
+    }) {}
+
+    int columnCount(const QModelIndex& parent) const override {
+        return 2;
+    }
+
+    int rowCount(const QModelIndex& parent) const override {
+        return static_cast<int>(m_rows.size());
+    }
+
+    QVariant data(const QModelIndex& index, const int role) const override {
+        if (role != Qt::DisplayRole) {
+            return QVariant();
+        }
+
+        const auto row = index.row();
+        if (row < 0 || row >= rowCount(QModelIndex())) {
+            return QVariant();
+        }
+
+        const auto col = index.column();
+        switch (col) {
+            case 0:
+                return QVariant(QString::fromStdString(std::get<0>(m_rows[static_cast<size_t>(row)])));
+            case 1:
+                return QVariant(QString::fromStdString(std::get<1>(m_rows[static_cast<size_t>(row)])));
+            default:
+                return QVariant();
+        }
+    }
+
+    Qt::ItemFlags flags(const QModelIndex& index) const override {
+        return QAbstractListModel::flags(index) | Qt::ItemIsEditable;
+    }
+
+    bool setData(const QModelIndex& index, const QVariant& value, const int role) override {
+        if (role != Qt::EditRole) {
+            return false;
+        }
+
+        const auto row = index.row();
+        if (row < 0 || row >= rowCount(QModelIndex())) {
+            return false;
+        }
+
+        const auto strValue = value.toString().toStdString();
+        const auto col = index.column();
+        switch (col) {
+            case 0:
+                std::get<0>(m_rows[static_cast<size_t>(row)]) = strValue;
+                emit dataChanged(createIndex(row, col), createIndex(row, col));
+                return true;
+            case 1:
+                std::get<1>(m_rows[static_cast<size_t>(row)]) = strValue;
+                emit dataChanged(createIndex(row, col), createIndex(row, col));
+                return true;
+            default:
+                return false;
+        }
+
+    }
+};
 
 int main(int argc, char *argv[])
 {
@@ -31,6 +112,23 @@ int main(int argc, char *argv[])
     // This environment variable disables Qt's emulation so we can implement it ourselves in InputEventRecorder::recordEvent
     qputenv("QT_MAC_DONT_OVERRIDE_CTRL_LMB", "1");
 
-    QGuiApplication app(argc, argv);
-    return app.exec();
-}
+    QApplication a(argc, argv);
+
+    auto* container = new QWidget();
+    container->setFixedSize(400, 300);
+
+    auto* tableView = new QTableView();
+    auto* tableModel = new TableModel(tableView);
+    auto* proxyModel = new QSortFilterProxyModel(tableView);
+    proxyModel->setSourceModel(tableModel);
+    tableView->setModel(proxyModel);
+
+    tableView->setSortingEnabled(true);
+    tableView->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::AnyKeyPressed);
+
+    auto* layout = new QVBoxLayout(container);
+    layout->addWidget(tableView);
+
+    container->show();
+
+    return a.exec();}

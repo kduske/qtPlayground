@@ -37,7 +37,7 @@ else()
     message(FATAL_ERROR "Unsupported compiler detected.")
 endif()
 
-# include(cmake/Utils.cmake)
+include(cmake/Utils.cmake)
 
 find_package(Qt5Widgets REQUIRED)
 
